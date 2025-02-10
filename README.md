@@ -1,6 +1,6 @@
-# 高级国际象棋游戏
+# 国际象棋游戏
 
-这是一个基于Python开发的高级国际象棋游戏，具有图形界面和AI对战功能。玩家可以与AI进行对战，体验智能化的国际象棋游戏。
+这是一个基于Python开发的国际象棋游戏，具有图形界面和AI对战功能。玩家可以与AI进行对战，体验智能化的国际象棋游戏。
 
 ## 功能特点
 
@@ -21,13 +21,13 @@
 
 1. 克隆项目到本地：
 ```bash
-git clone <repository-url>
-cd chess_advanced
+git clone https://github.com/KercyDing/Chess-with-AI.git
+cd Chess-with-AI
 ```
 
 2. 安装依赖：
 ```bash
-pip install pygame python-chess
+pip install -r requirements.txt
 ```
 
 ## 运行游戏
@@ -77,7 +77,3 @@ python main.py
 ## 开发者
 
 KercyDing
-
-## 许可证
-
-MIT License
