@@ -3,10 +3,19 @@ import chess
 import chess.svg
 import io
 import time
+import platform
 
 WIDTH = 800
 SQ_SIZE = WIDTH // 8
 TIMEOUT = 90
+
+system = platform.system()
+if system == 'Windows':
+    SYSTEM = 0
+elif system == 'Darwin':
+    SYSTEM = 1
+else:
+    SYSTEM = 2
 
 # Piece values
 PIECE_VALUES = {
@@ -145,7 +154,12 @@ class ChessGUI:
     def get_piece_image(self, piece):
         key = f"{piece.color}_{piece.piece_type}"
         if key not in self.piece_cache:
-            svg = chess.svg.piece(piece, size=SQ_SIZE * 1.2)
+            if SYSTEM == 0:
+                svg = chess.svg.piece(piece, size=SQ_SIZE * 0.45)
+            elif SYSTEM == 1:
+                svg = chess.svg.piece(piece, size=SQ_SIZE * 1.2)
+            else:
+                svg = chess.svg.piece(piece, size=SQ_SIZE)
             img = pygame.image.load(io.BytesIO(svg.encode('utf-8')))
             self.piece_cache[key] = pygame.transform.smoothscale(img, (SQ_SIZE, SQ_SIZE))
         return self.piece_cache[key]
