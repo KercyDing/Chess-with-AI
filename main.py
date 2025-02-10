@@ -8,7 +8,7 @@ WIDTH = 800
 SQ_SIZE = WIDTH // 8
 TIMEOUT = 90
 
-# 棋子估值
+# Piece values
 PIECE_VALUES = {
     chess.PAWN: 100,
     chess.KNIGHT: 320,
@@ -18,7 +18,7 @@ PIECE_VALUES = {
     chess.KING: 20000
 }
 
-# 棋子位置价值表
+# Piece position tables
 PAWN_TABLE = [
     0,  0,  0,  0,  0,  0,  0,  0,
     5, 10, 10, -20, -20, 10, 10,  5,
@@ -112,7 +112,7 @@ class ChessGUI:
         self.delay_start_time = None
         self.promotion_choice = None
         self.last_move = None
-        self.last_move_from = None  # 记录最后一次移动的起始位置
+        self.last_move_from = None  # record the starting position of the last move
         self.castling_rights = {chess.WHITE: True, chess.BLACK: True}
         self.king_moved = {chess.WHITE: False, chess.BLACK: False}
         self.rook_moved = {chess.WHITE: {chess.A1: False, chess.H1: False},
@@ -124,22 +124,22 @@ class ChessGUI:
                 color = (238, 238, 210) if (row + col) % 2 == 0 else (118, 150, 86)
                 pygame.draw.rect(self.screen, color,
                                  (col * SQ_SIZE, row * SQ_SIZE, SQ_SIZE, SQ_SIZE))
-        
-        # 绘制最后一次移动的起始位置和终点位置标记
+
+        # Draw markers for the start and end positions of the last move
         if self.last_move_from is not None and self.last_move is not None:
-            # 绘制起始位置
+            # Draw starting position
             row = 7 - (self.last_move_from // 8)
             col = self.last_move_from % 8
             s = pygame.Surface((SQ_SIZE, SQ_SIZE), pygame.SRCALPHA)
-            s.fill((0, 0, 255, 64))  # 使用半透明的蓝色标记
+            s.fill((0, 0, 255, 64))  # Use semi-transparent blue marker
             self.screen.blit(s, (col * SQ_SIZE, row * SQ_SIZE))
-            
-            # 绘制终点位置
+
+            # Draw ending position
             to_square = self.last_move.to_square
             row = 7 - (to_square // 8)
             col = to_square % 8
             s = pygame.Surface((SQ_SIZE, SQ_SIZE), pygame.SRCALPHA)
-            s.fill((0, 0, 255, 64))  # 使用半透明的蓝色标记
+            s.fill((0, 0, 255, 64))  # Use semi-transparent blue marker
             self.screen.blit(s, (col * SQ_SIZE, row * SQ_SIZE))
 
     def get_piece_image(self, piece):
@@ -183,10 +183,10 @@ class ChessGUI:
             self.show_end_screen(f"{loser} loses! {winner} wins!")
             return True
 
-        # 检查和棋情况
+        # Check for draw conditions
         pieces = self.board.piece_map()
-        if len(pieces) <= 4:  # 只有在棋子数量小于等于4时才需要检查和棋情况
-            # 双方只剩国王
+        if len(pieces) <= 4:  # Only check draw conditions if the number of pieces is less than or equal to 4
+            # Only kings left for both sides
             if len(pieces) == 2:
                 kings_only = True
                 for piece in pieces.values():
@@ -197,7 +197,7 @@ class ChessGUI:
                     self.show_end_screen("Draw! Only kings left.")
                     return True
 
-            # 一方只有国王，另一方有国王和单马
+            # One side has only king, the other side has king and single knight
             if len(pieces) == 3:
                 white_pieces = {sq: p for sq, p in pieces.items() if p.color == chess.WHITE}
                 black_pieces = {sq: p for sq, p in pieces.items() if p.color == chess.BLACK}
@@ -208,7 +208,7 @@ class ChessGUI:
                     self.show_end_screen("Draw! King vs King and Knight.")
                     return True
 
-                # 一方只有国王，另一方有国王和单象
+                # One side has only king, the other side has king and single bishop
                 if (len(white_pieces) == 1 and list(white_pieces.values())[0].piece_type == chess.KING and
                     len(black_pieces) == 2 and any(p.piece_type == chess.BISHOP for p in black_pieces.values())) or\
                    (len(black_pieces) == 1 and list(black_pieces.values())[0].piece_type == chess.KING and
@@ -216,16 +216,16 @@ class ChessGUI:
                     self.show_end_screen("Draw! King vs King and Bishop.")
                     return True
 
-            # 双方各有一个同色格的象
+            # Both sides have a bishop of the same color complex
             if len(pieces) == 4:
                 bishops = []
                 for piece in pieces.values():
                     if piece.piece_type == chess.BISHOP:
                         bishops.append(piece)
                 if len(bishops) == 2 and bishops[0].color != bishops[1].color:
-                    # 检查两个象是否在同色格
+                    # Check if two bishops are on same color squares
                     bishop_squares = [sq for sq, p in pieces.items() if p.piece_type == chess.BISHOP]
-                    if (bishop_squares[0] + bishop_squares[1]) % 2 == 0:  # 同色格
+                    if (bishop_squares[0] + bishop_squares[1]) % 2 == 0:  # Same color squares
                         self.show_end_screen("Draw! Kings and same-colored bishops.")
                         return True
 
@@ -332,7 +332,7 @@ class ChessGUI:
 
     def evaluate_board(self):
         score = 0
-        # 基础评分：棋子价值和位置价值
+        # Basic scoring: piece values and position values
         for square in chess.SQUARES:
             piece = self.board.piece_at(square)
             if piece:
@@ -341,29 +341,29 @@ class ChessGUI:
                 if piece.color == chess.WHITE:
                     score += value + table[square]
                 else:
-                    # 翻转黑方的位置表
+                    # Flip the position table for black
                     score -= value + table[63 - square]
-        
-        # 检查是否处于被将军状态（最高优先级）
+
+        # Check if in check (highest priority)
         if self.board.is_check():
             if self.board.turn == chess.WHITE:
-                score -= 1000  # 白方被将军，降低评分
+                score -= 1000  # White is in check, reduce score
             else:
-                score += 1000  # 黑方被将军，提高评分
-        
-        # 检查受威胁的棋子和保护策略（第二优先级）
+                score += 1000  # Black is in check, increase score
+
+        # Check threatened pieces and protection strategies (second priority)
         for square in chess.SQUARES:
             piece = self.board.piece_at(square)
             if piece:
                 attackers = list(self.board.attackers(not piece.color, square))
                 defenders = list(self.board.attackers(piece.color, square))
                 if attackers:
-                    # 计算攻击者和防守者的最小价值
+                    # Calculate the minimum value of attackers and defenders
                     min_attacker_value = min(PIECE_VALUES[self.board.piece_at(att).piece_type] for att in attackers)
                     min_defender_value = float('inf') if not defenders else \
                                        min(PIECE_VALUES[self.board.piece_at(def_).piece_type] for def_ in defenders)
-                    
-                    # 如果防守者价值小于攻击者，这是一个好的防守
+
+                    # If defender value is less than attacker, it's a good defense
                     if min_defender_value < min_attacker_value:
                         defense_bonus = (min_attacker_value - min_defender_value) * 0.2
                         if piece.color == chess.WHITE:
@@ -371,51 +371,51 @@ class ChessGUI:
                         else:
                             score -= defense_bonus
                     else:
-                        # 受到威胁且无法有效防守时的惩罚
+                        # Penalty for being threatened and unable to defend effectively
                         threat_value = PIECE_VALUES[piece.piece_type] * 0.8
                         if piece.color == chess.WHITE:
                             score -= threat_value
                         else:
                             score += threat_value
-        
-        # 检查可以吃掉的对方棋子（第三优先级）
+
+        # Check for capturable opponent pieces (third priority)
         for move in self.board.legal_moves:
             if self.board.is_capture(move):
                 captured_piece = self.board.piece_at(move.to_square)
                 if captured_piece:
-                    # 模拟这个吃子动作
+                    # Simulate the capture move
                     self.board.push(move)
-                    
-                    # 检查吃子后是否会被反吃
+
+                    # Check if there will be a recapture after capture
                     attackers = list(self.board.attackers(not self.board.turn, move.to_square))
                     defenders = list(self.board.attackers(self.board.turn, move.to_square))
-                    
-                    # 计算吃子后的局面评分
+
+                    # Calculate the score of the position after capture
                     capture_score = PIECE_VALUES[captured_piece.piece_type]
                     if attackers:
-                        # 如果吃完会被反吃，要考虑损失
+                        # If there will be recapture, consider the loss
                         min_attacker_value = min(PIECE_VALUES[self.board.piece_at(att).piece_type] for att in attackers)
                         if not defenders:
-                            # 没有防守者，会损失吃子的棋子
+                            # No defenders, will lose the capturing piece
                             capture_score = PIECE_VALUES[captured_piece.piece_type] - \
                                           PIECE_VALUES[self.board.piece_at(move.to_square).piece_type]
                         else:
-                            # 有防守者，但要评估是否值得交换
+                            # Has defenders, but evaluate if the exchange is worth it
                             min_defender_value = min(PIECE_VALUES[self.board.piece_at(def_).piece_type] \
                                                     for def_ in defenders)
                             if min_defender_value > min_attacker_value:
-                                # 防守者比攻击者贵重，不划算
+                                # Defenders are more valuable than attackers, not worth it
                                 capture_score = PIECE_VALUES[captured_piece.piece_type] - \
                                                PIECE_VALUES[self.board.piece_at(move.to_square).piece_type]
-                    
+
                     self.board.pop()
-                    
-                    # 根据局面评分调整分数
+
+                    # Adjust score based on the position score
                     if self.board.turn == chess.WHITE:
                         score += capture_score * 0.3
                     else:
                         score -= capture_score * 0.3
-        
+
         return score
 
     def minimax(self, depth, alpha, beta, maximizing_player):
@@ -447,7 +447,7 @@ class ChessGUI:
 
     def find_best_move(self):
         best_move = None
-        max_depth = 4  # 可根据性能调整搜索深度
+        max_depth = 4  # Search depth, can be adjusted based on performance
         for depth in range(1, max_depth + 1):
             current_best_move = self._find_best_move_at_depth(depth)
             if current_best_move:
@@ -505,7 +505,7 @@ class ChessGUI:
                                     selected_square = square
                             else:
                                 move = chess.Move(selected_square, square)
-                                # 检查是否是兵升变走法
+                                # Check if it is pawn promotion move
                                 is_promotion = False
                                 piece = self.board.piece_at(selected_square)
                                 if piece and piece.piece_type == chess.PAWN:
@@ -526,7 +526,7 @@ class ChessGUI:
                                         move = chess.Move(selected_square, square, promotion=self.promotion_choice)
                                         self.promotion_choice = None
 
-                                # 检查是否是吃过路兵
+                                # Check if it is en passant capture
                                 elif piece and piece.piece_type == chess.PAWN and self.last_move:
                                     last_piece = self.board.piece_at(self.last_move.to_square)
                                     if last_piece and last_piece.piece_type == chess.PAWN:
@@ -539,7 +539,7 @@ class ChessGUI:
                                 if move in self.board.legal_moves:
                                     self.board.push(move)
                                     self.last_move = move
-                                    self.last_move_from = selected_square  # 记录起始位置
+                                    self.last_move_from = selected_square  # Record starting position
                                     self.current_player = not self.current_player
                                     self.is_ai_turn = True
                                     if self.current_player == chess.WHITE:
@@ -550,7 +550,7 @@ class ChessGUI:
                                     self.last_time_check = time.time()
                                     self.delay_start_time = time.time()
                                 if self.promotion_choice:
-                                    # 创建包含升变信息的新移动
+                                    # Create a new move with promotion info
                                     promotion_move = chess.Move(selected_square, square, promotion=self.promotion_choice)
                                     if promotion_move in self.board.legal_moves:
                                         self.board.push(promotion_move)
@@ -577,8 +577,8 @@ class ChessGUI:
                         best_move = self.find_best_move()
                         if best_move:
                             self.board.push(best_move)
-                            self.last_move = best_move  # 更新最后一步移动
-                            self.last_move_from = best_move.from_square  # 记录AI移动的起始位置
+                            self.last_move = best_move  # Update last move
+                            self.last_move_from = best_move.from_square  # Record AI move start position
                             self.current_player = not self.current_player
                             self.is_ai_turn = False
                             if self.current_player == chess.WHITE:
